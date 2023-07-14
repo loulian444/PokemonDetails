@@ -1,11 +1,13 @@
 console.log(`hehehoohoohaha`);
 
 let pokeList = [];
+let allImgLink = [];
+
 const get20Pokes = async () => {
   try {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon/`);
     const data = await response.json();
-    return data.results;    
+    return data.results;
   } catch (err) {
     console.log(err);
   }
@@ -26,18 +28,18 @@ const getPokeInfo = async (pokemonList) => {
 const getPokeSprite = (pokeInformation) => {
   const pokeSprites = pokeInformation.map(
     (singlePoke) => singlePoke.sprites.front_default
-    );
-    
-  return pokeSprites
+  );
+
+  return pokeSprites;
 };
 
 const putSpritesToImg = (spritesArr) => {
   const imgSpriteArr = spritesArr.map((spriteURL) => {
     const img = document.createElement(`img`);
     img.src = spriteURL;
-    
+
     return img;
-  })
+  });
 
   return imgSpriteArr;
 };
@@ -47,7 +49,7 @@ const render = (sprites) => {
   sprites.forEach((sprite) => {
     section.appendChild(sprite);
   });
-}
+};
 
 const getImgLink = (sprites, pokemonInfo) => {
   const imgLink = [];
@@ -55,27 +57,25 @@ const getImgLink = (sprites, pokemonInfo) => {
     const a = document.createElement(`a`);
     a.setAttribute(`data-number`, pokemonInfo[i].id);
     a.appendChild(sprites[i]);
-    console.log(a)
 
     imgLink.push(a);
-    // const imgLink = `<a href="" data-number="${pokemonInfo[i].id}">${spritesImg[i]}</a>`;
   }
 
   return imgLink;
-}
+};
 
 const addLinkEventListeners = () => {
   const links = document.querySelectorAll(`a`);
   for (let i = 0; i < links.length; i++) {
     const link = links[i];
 
-    link.addEventListener(`click`, async(event) => {
+    link.addEventListener(`click`, async (event) => {
       event.preventDefault();
-      console.log(link.dataset.number)
+
       await getSinglePokeInfo(link.dataset.number);
     });
   }
-}
+};
 
 const getSinglePokeInfo = async (pokeID) => {
   const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokeID}`);
@@ -85,17 +85,49 @@ const getSinglePokeInfo = async (pokeID) => {
 };
 
 const renderPokeDetails = (pokeData) => {
-  const pre = document.querySelector(`pre`);
-  pre.innerText = JSON.stringify(pokeData, null, 2);
-}
+  const section = document.querySelector(`section`);
+  const h1 = document.createElement(`h1`);
+  const button = document.createElement(`button`);
+
+  section.innerHTML = ``;
+  h1.innerText = pokeData.name;
+  button.innerText = `Back`;
+  const spriteLinks = allSpritesToImg(pokeData);
+
+  section.appendChild(h1);
+
+  for (let i = 0; i < spriteLinks.length; i++) {
+    const img = document.createElement(`img`);
+    img.src = spriteLinks[i];
+    section.appendChild(img);
+  }
+
+  section.appendChild(document.createElement(`br`));
+  section.appendChild(button);
+
+  button.addEventListener(`click`, () => {
+    section.innerHTML = ``;
+    render(allImgLink);
+  });
+};
+
+const allSpritesToImg = (pokeData) => {
+  const imgSpritesLinks = [
+    pokeData.sprites.front_default,
+    pokeData.sprites.back_default,
+    pokeData.sprites.front_shiny,
+    pokeData.sprites.back_shiny,
+  ];
+
+  return imgSpritesLinks;
+};
 
 const init = async () => {
   pokeList = await get20Pokes();
   const allPokeInfo = await getPokeInfo(pokeList);
   const allPokeSprites = getPokeSprite(allPokeInfo);
   const allImgSprites = putSpritesToImg(allPokeSprites);
-  const allImgLink = getImgLink(allImgSprites, allPokeInfo);
-  // console.log(allImgLink)
+  allImgLink = getImgLink(allImgSprites, allPokeInfo);
   render(allImgLink);
   addLinkEventListeners();
 };
