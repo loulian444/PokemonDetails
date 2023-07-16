@@ -5,7 +5,7 @@ let allImgLink = [];
 
 const get20Pokes = async () => {
   try {
-    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/`);
+    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/?limit=151`);
     const data = await response.json();
     return data.results;
   } catch (err) {
@@ -78,11 +78,28 @@ const addLinkEventListeners = () => {
   }
 };
 
-const getSinglePokeInfo = async (pokeID) => {
-  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokeID}`);
-  const data = await response.json();
+const addSearchEvent = () => {
+  const form = document.querySelector(`form`);
+  const pokeSearch = document.querySelector(`#pokeSearch`);
 
-  renderPokeDetails(data);
+  form.addEventListener(`submit`, (event) => {
+    event.preventDefault();
+    
+    getSinglePokeInfo(pokeSearch.value);
+    form.reset();
+  })
+}
+
+const getSinglePokeInfo = async (pokeID) => {
+  try {
+    const loweredID = pokeID.toLowerCase();
+    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${loweredID}`);
+    const data = await response.json();
+    renderPokeDetails(data);
+  } catch (err) {
+    window.alert(`${pokeID} is not a valid Pokemon`);
+  }
+
 };
 
 const renderPokeDetails = (pokeData) => {
@@ -95,8 +112,8 @@ const renderPokeDetails = (pokeData) => {
   h1.innerText = pokeData.name;
   button.innerText = `Back`;
   const spriteLinks = getSpritesArr(pokeData);
-  const typing = getPokeTypes(pokeData);
-  p.innerText = `type: ${typing.join(`/`)}`;
+  p.innerHTML = `<b>type</b>: ${getPokeTypes(pokeData).join(`/`)} </br>
+  <b>ability</b>: ${getPokeAbilities(pokeData).join(`/`)}`;
 
   section.appendChild(h1);
 
@@ -120,16 +137,18 @@ const getSpritesArr = (pokeData) => imgSpritesLinks = [pokeData.sprites.front_de
 
 const getPokeTypes = (pokeData) => {
   const pokemonType = pokeData.types;
-  const typeNames = pokemonType.map((type) => {
-    return type.type.name;
-  });
+  const typeNames = pokemonType.map((type) => type.type.name);
   
   return typeNames;
 }
 
-const arrToString = (arr) => {
-  return JSON.stringify(arr)
+const getPokeAbilities = (pokeData) => {
+  const pokemonAbilities = pokeData.abilities;
+  const abilityNames = pokemonAbilities.map((ability) => !ability.is_hidden ? ability.ability.name : `${ability.ability.name}(hidden)`);
+
+  return abilityNames;
 }
+
 
 const init = async () => {
   pokeList = await get20Pokes();
@@ -139,7 +158,7 @@ const init = async () => {
   allImgLink = getImgLink(allImgSprites, allPokeInfo);
   render(allImgLink);
   addLinkEventListeners();
-  getPokeTypes(allPokeInfo[4])
+  addSearchEvent();
 };
 
 init();
